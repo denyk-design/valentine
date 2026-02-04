@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Valentýn</title>
+
+<style>
+    body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #ffb6c1;
+        font-family: Arial, sans-serif;
+        overflow: hidden;
+    }
+
+    .card {
+        background: white;
+        width: 600px; /* širší než předtím */
+        max-width: 90%;
+        height: 480px;
+        padding: 30px;
+        border-radius: 25px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        position: relative;
+    }
+
+    .emoji {
+        font-size: 70px;
+        margin-bottom: 20px;
+    }
+
+    h2 {
+        margin-bottom: 40px;
+    }
+
+    .taunt {
+        height: 24px;
+        font-size: 14px;
+        color: #999;
+        margin-bottom: 10px;
+    }
+
+    .button-area {
+        position: relative;
+        width: 100%;
+        height: 220px;
+    }
+
+    button {
+        width: 100px;
+        height: 42px;
+        font-size: 16px;
+        border-radius: 12px;
+        border: none;
+        position: absolute;
+        cursor: pointer;
+    }
+
+    #yes {
+        background: #ff69b4;
+        color: white;
+        left: 40px;
+        bottom: 20px;
+        animation: pulse 2.5s infinite;
+    }
+
+    #yes.bounce {
+        animation: bounce 0.6s;
+    }
+
+    #no {
+        background: #e0e0e0;
+        right: 40px;
+        bottom: 20px;
+        pointer-events: none;
+        transition: left 0.12s linear, top 0.12s linear;
+    }
+
+    @keyframes pulse {
+        0%,100% { transform: scale(1); }
+        50% { transform: scale(1.08); }
+    }
+
+    @keyframes bounce {
+        0% { transform: translateY(0); }
+        30% { transform: translateY(-10px); }
+        60% { transform: translateY(4px); }
+        100% { transform: translateY(0); }
+    }
+
+    /* styl pro GIF a zprávu po výběru ANO */
+    .celebrate {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+    }
+
+    .celebrate img {
+        max-height: 200px;
+        margin-bottom: 20px;
+    }
+
+    .celebrate h2 {
+        font-size: 28px;
+        color: #ff1493;
+        margin: 0;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="card" id="card">
+    <div class="emoji">😘</div>
+    <h2>Budeš můj valentýnek?</h2>
+    <div class="taunt" id="taunt"></div>
+
+    <div class="button-area" id="area">
+        <button id="yes">ANO</button>
+        <button id="no">NE</button>
+    </div>
+    <br>
+    <h5><b>NE</b> je trošku stydlivé 😈</h5>
+</div>
+
+<script>
+const noBtn = document.getElementById("no");
+const yesBtn = document.getElementById("yes");
+const area = document.getElementById("area");
+const taunt = document.getElementById("taunt");
+const card = document.getElementById("card");
+
+let attempts = 0;
+let gone = false;
+
+const SAFE_DISTANCE = 160;
+
+const taunts = [
+    "Skoro 😏", "To bylo těsné!", "Zkus to líp 😄",
+    "Už se potíš?", "Nejde to 😈", "Furt nic!",
+    "Marná snaha 😜", "Tohle nevyhraješ", "Hezký pokus 😂",
+    "Tak určitě 😏"
+];
+
+function moveNoButton(mouseX, mouseY) {
+    const maxX = area.clientWidth - noBtn.offsetWidth;
+    const maxY = area.clientHeight - noBtn.offsetHeight;
+    const areaRect = area.getBoundingClientRect();
+
+    let x, y, dist, tries = 0;
+
+    do {
+        // hlavní náhodný skok
+        x = Math.random() * maxX;
+        y = Math.random() * maxY;
+
+        // lehké chvění ±20px
+        x += (Math.random() - 0.5) * 40;
+        y += (Math.random() - 0.5) * 40;
+
+        // oříznutí na povolený rozsah
+        x = Math.max(0, Math.min(x, maxX));
+        y = Math.max(0, Math.min(y, maxY));
+
+        const btnCenterX = areaRect.left + x + noBtn.offsetWidth / 2;
+        const btnCenterY = areaRect.top + y + noBtn.offsetHeight / 2;
+
+        dist = Math.hypot(mouseX - btnCenterX, mouseY - btnCenterY);
+        tries++;
+    } while (dist < SAFE_DISTANCE && tries < 50);
+
+    noBtn.style.left = x + "px";
+    noBtn.style.top = y + "px";
+}
+
+function disappearNoForever() {
+    gone = true;
+    noBtn.textContent = "Pěkný pokus!";
+    noBtn.style.transition = "all 4s ease";
+    noBtn.style.top = "-100px"; // odlet nahoru
+    noBtn.style.opacity = "0";
+}
+
+// útěk NE
+area.addEventListener("mousemove", (e) => {
+    if (gone) return;
+
+    const rect = noBtn.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+
+    const distance = Math.hypot(e.clientX - cx, e.clientY - cy);
+
+    if (distance < SAFE_DISTANCE) {
+        attempts++;
+        moveNoButton(e.clientX, e.clientY);
+
+        if (attempts % 10 === 0) {
+            taunt.textContent = taunts[(attempts / 10 - 1) % taunts.length];
+        }
+
+          if(attempts >= 100) disappearNoForever();
+    }
+});
+
+// mobil
+area.addEventListener("touchstart", (e) => {
+    if (!gone) {
+        const touch = e.touches[0];
+        attempts++;
+        moveNoButton(touch.clientX, touch.clientY);
+        if (attempts >= 500) noBtn.style.display = 'none';
+    }
+});
+
+// ANO klik
+yesBtn.addEventListener("click", () => {
+    // vymažeme původní obsah
+    card.innerHTML = `
+        <div class="celebrate">
+         <h2>Správná volba 💖</h2>
+         <br>
+            <img src="https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExaXFtMnNuN3dlZ3JwNWxpdXQ0a2lpYWdxMXhkc292ZW82bXprM3V0biZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/iiTXaJVjiSHew/giphy.gif" alt="Oslava">
+    
+        </div>
+    `;
+});
+
+// ANO lákání
+setInterval(() => {
+    yesBtn.classList.add("bounce");
+    setTimeout(() => yesBtn.classList.remove("bounce"), 600);
+}, 4000);
+</script>
+
+</body>
+</html>
