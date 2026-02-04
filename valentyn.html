@@ -216,7 +216,7 @@ area.addEventListener("touchstart", (e) => {
         const touch = e.touches[0];
         attempts++;
         moveNoButton(touch.clientX, touch.clientY);
-        if (attempts >= 500) noBtn.style.display = 'none';
+        if (attempts >= 5) noBtn.style.display = 'none';
     }
 });
 
@@ -242,3 +242,4 @@ setInterval(() => {
 
 </body>
 </html>
+
